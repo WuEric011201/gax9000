@@ -346,7 +346,7 @@ class ControllerSettings():
     """
     def __init__(
         self,
-        gpib_b1500: int = 16,                # gpib id of b1500 instrument
+        gpib_b1500: int = 17,                # gpib id of b1500 instrument
         gpib_cascade: int = 22,              # gpib id of cascade instrument
         users: list = ["public"],            # list of username strings
         invert_direction: bool = True,       # invert chuck movement directions (if true, topleft is (+x,+y))
@@ -366,7 +366,7 @@ class ControllerSettings():
     def default():
         """Return a default settings object."""
         return ControllerSettings(
-            gpib_b1500=16,
+            gpib_b1500=17,
             gpib_cascade=22,
             users=["public"],
             invert_direction=True,

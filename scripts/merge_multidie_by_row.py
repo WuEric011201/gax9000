@@ -81,7 +81,7 @@ class ModuleMeasurement:
 
 def merge_multidie_module_data(
     path: str,
-    program: str = "keysight_id_vgs",
+    program: str = "keysight_id_vds",
 ):
     import numpy as np
     import os
@@ -159,7 +159,7 @@ if __name__ == "__main__":
         "--program",
         metavar="program",
         type=str,
-        default="keysight_id_vgs",
+        default="keysight_id_vds",
         help="Measurement program type name, e.g. keysight_id_vgs or keysight_id_vds"
     )
 

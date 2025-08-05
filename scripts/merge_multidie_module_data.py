@@ -148,7 +148,7 @@ if __name__ == "__main__":
         "--program",
         metavar="program",
         type=str,
-        default="keysight_id_vgs",
+        default="keysight_id_vds",
         help="Measurement program type name, e.g. keysight_id_vgs or keysight_id_vds"
     )
 

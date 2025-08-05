@@ -41,11 +41,14 @@ cd frontend
 npm install
 ```
 
+6. To Run the Frontend
+cd .\frontend\
+npm run dev
 
 # Usage
 First run server using script
 ```
-./run.sh 
+./run.bat
 ```
 This will by default use `./data` as the real instance data folder.
 

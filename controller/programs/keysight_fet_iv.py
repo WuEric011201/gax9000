@@ -643,10 +643,10 @@ class ProgramKeysightIdVds(MeasurementProgram):
         monitor_channel: EventChannel = None,
         signal_cancel=None,
         sweep_metadata: dict = {},
-        probe_gate=1,
-        probe_source=8,
+        probe_gate=3,
+        probe_source=5,
         probe_drain=4,
-        probe_sub=9,
+        probe_sub=6,
         v_gs={
             "start": 0.0,
             "stop": -1.2,
@@ -670,7 +670,15 @@ class ProgramKeysightIdVds(MeasurementProgram):
         pulse_period=0.010, # pulse period (dc pulsed mode)
         **kwargs,
     ) -> dict:
+
+        logging.basicConfig(
+            level=logging.INFO,  # or DEBUG
+            format="%(asctime)s [%(levelname)s] %(message)s",
+            handlers=[logging.StreamHandler()]
+        )
+
         """Run the program."""
+
         logging.info(f"probe_gate = {probe_gate}")
         logging.info(f"probe_source = {probe_source}")
         logging.info(f"probe_drain = {probe_drain}")
@@ -996,6 +1004,7 @@ if __name__ == "__main__":
     import json
     from controller.util.io import export_hdf5, export_mat
     from controller.backend import ControllerSettings
+    print("Debugging message...", flush=True)
 
     parser = argparse.ArgumentParser(description="Run FET IV measurement.")
 
@@ -1061,14 +1070,14 @@ if __name__ == "__main__":
             instr_b1500.write(f"DZ") # ensure channels are zero-d
             print(traceback.format_exc())
         
-        path_result_mat = f"debug/{program.name}.mat"
-        path_result_h5 = f"debug/{program.name}.h5"
+        path_result_mat = f"./scripts/data/{program.name}.mat"
+        path_result_h5 = f"./scripts/data/{program.name}.h5"
         export_hdf5(path_result_h5, result.data)
         export_mat(path_result_mat, result.data)
     
-    task = gevent.spawn(run_measurement)
-    gevent.joinall([task])
-
+    # task = gevent.spawn(run_measurement)
+    # gevent.joinall([task])
+    run_measurement()
     # done, turn off
     print("MEASUREMENT DONE, TURNING OFF SMUs WITH CL")
     instr_b1500.write("CL")
