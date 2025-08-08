@@ -8,7 +8,7 @@
 %%% 
 clear all; close all;
 
-data = load('./data/keysight_id_vgs.mat')
+data = load('./keysight_id_vgs.mat')
 
 % get number of sequences and sweep directions (fwd/rev)
 data_shape = size(data.i_d);

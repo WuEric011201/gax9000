@@ -12,9 +12,23 @@ gax9000/
  └─ frontend/     - JS frontend controller and monitor
 ```
 
+# Running ---------------CMU TONG WU
+source .\venv\Scripts\activate
+cd frontend; npm run dev 
+New terminal run Backend: 	.\run.bat 
+Open  https://localhost:80	
+probe_gate = 4
+probe_source = 5
+probe_drain = 3
 
-# Setup/Installation
-1.  Create python virtual environment
+
+modules_file = "C:\\Users\\tongwu2\\Documents\\GitHub\\gax9000\\build\\measurements\\skywater_cnfet_sputter_scaling_v1_fet_modules.toml"
+
+sweep_file = "C:\\Users\\tongwu2\\Documents\\GitHub\\gax9000\\build\\measurements\\final_width_sweep.toml"
+
+
+# Setup/Installation(only for first time) 
+1.  Create python virtual environment 
 ```
 python -m venv venv
 ```
@@ -22,7 +36,7 @@ python -m venv venv
 2.  Start environment
 ```
 (Windows)
-source venv/Scripts/active
+source .\venv\Scripts\activate
 ```
 
 3.  Install python requirements

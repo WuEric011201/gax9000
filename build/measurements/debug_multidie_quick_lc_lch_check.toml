@@ -1,0 +1,37 @@
+
+# generates modules file .toml config
+modules_file = "skywater_cnfet_sputter_scaling_v1_fet_modules.toml"
+
+[sweep]
+modules = [
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.20_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.20_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.16_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.16_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.14_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.14_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.12_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.12_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.10_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.20_lch_0.10_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.20_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.20_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.16_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.16_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.14_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.14_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.12_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.12_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.10_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.16_lch_0.10_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.20_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.20_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.16_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.16_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.14_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.14_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.12_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.12_lov_0.06_gateasym_0.00_w_4.0_22",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.10_lov_0.06_gateasym_0.00_w_4.0_23",
+    "mod_fet_tlm_nmos_lc_0.12_lch_0.10_lov_0.06_gateasym_0.00_w_4.0_22",
+]
