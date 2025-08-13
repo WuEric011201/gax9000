@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025_08_11_21_42_45",
+  "user": "public",
+  "sweep": "multi_die_modules",
+  "sweep_config": "\n### sweep die coordinates clockwise\ndies = [\n    # center\n    [1, -1],\n    # first ring\n    [0, 1],[1, 1], [1, 0], [1, -1], [0, -1], [-1, -1], [-1, 0], [-1, 1],\n    # 2nd ring corners (if needed)\n    # [0, 2], [2, 0], [0, -2], [-2, 0],\n    # second ring\n    # [0, 2], [1, 2], [2, 2], [2, 1],\n    # [2, 0], [2, -1], [2, -2], [1, -2],\n    # [3, 2], [3, 1], [3, 0], [3, -1], [3, -2],\n    # [0, -2], [-1, -2], [-2, -2], [-2, -1],\n    # [-2, 0], [-2, 1], [-2, 2], [-1, 2],\n    # [-3, 2], [-3, 1], [-3, 0], [-3, -1], [-3, -2],\n    # third ring edges (outer edges)\n    # [-4, -1], [-4, 0], [-4, 1],\n    # [-1, 3], [0, 3], [1, 3],\n    # [4, 1], [4, 0], [4, -1],\n    # [1, -3], [0, -3], [-1, -3],\n]\n\n\n\n### reference to all modules in .toml\nmodules_file = \"C:\\\\Users\\\\tongwu2\\\\Documents\\\\GitHub\\\\gax9000\\\\build\\\\measurements\\\\skywater_cnfet_sputter_scaling_v1_fet_modules.toml\"\n\n### reference to sweep config\nsweep_file = \"C:\\\\Users\\\\tongwu2\\\\Documents\\\\GitHub\\\\gax9000\\\\build\\\\measurements\\\\final_fingered_compare.toml\"",
+  "initial_die_x": 0,
+  "initial_die_y": 0,
+  "die_dx": 19302,
+  "die_dy": 26202,
+  "initial_device_row": 0,
+  "initial_device_col": 0,
+  "device_dx": 0,
+  "device_dy": 0,
+  "data_folder": "C:\\Users\\tongwu2\\Documents\\GitHub\\gax9000\\scripts\\finger_sweep",
+  "programs": [
+    {
+      "name": "keysight_id_vgs",
+      "config": "probe_gate = 4\nprobe_source = 5\nprobe_drain = 3\nprobe_sub = 6\nv_gs = { start = -2, stop = 2, step = 0.05 }\nv_ds = [0.05, 0.8]\nv_sub = 0.0\nnegate_id = true\nsweep_direction = \"frfr\""
+    }
+  ]
+}

@@ -13,7 +13,11 @@ gax9000/
 ```
 
 # Running ---------------CMU TONG WU
-source .\venv\Scripts\activate
+python --version
+Python 3.10.11
+pip --version
+pip 23.0.1 
+ .\venv\Scripts\activate
 cd frontend; npm run dev 
 New terminal run Backend: 	.\run.bat 
 Open  https://localhost:80	

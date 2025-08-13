@@ -1,8 +1,0 @@
-
-# generates modules file .toml config
-modules_file = "skywater_cnfet_sputter_scaling_v1_fet_modules.toml"
-
-[sweep]
-modules = [
-    "mod_fet_tlm_nmos_lc_0.40_lch_0.10_lov_0.06_gateasym_0.00_w_4.0_23",
-]

@@ -145,7 +145,7 @@ class SweepMultiDieModules(MeasurementSweep):
         # store current die location
         current_die_x = initial_die_x
         current_die_y = initial_die_y
-
+        instr_cascade.move_chuck_home()  # Tong ADDED
         for die_coord in die_coordinates:
             die_x, die_y = die_coord
             
@@ -171,8 +171,12 @@ class SweepMultiDieModules(MeasurementSweep):
                     # move chuck to target die location using relative coord from current die
                     dx_to_die = (die_x - current_die_x) * die_dx
                     dy_to_die = (die_y - current_die_y) * die_dy
-                    logging.info(f"Moving to die ({die_x}, {die_y}) at ({dx_to_die}, {dy_to_die})")
-                    instr_cascade.move_chuck_relative_to_home(x=dx_to_die, y=dy_to_die, timeout=20.0)
+                    print(f"die_dx={die_dx}, die_dy={die_dy}, dx_to_die={dx_to_die}, dy_to_die={dy_to_die}")
+                    logging.info(f"Tong Moving to die ({die_x}, {die_y}) from ({current_die_x},{current_die_y}) ")
+                    # instr_cascade.move_chuck_relative_to_home(x=dx_to_die, y=dy_to_die)  <-----------Tong: Problematic line
+                    instr_cascade.write(f"MoveChuck {dx_to_die} {dy_to_die} H Y 100")
+                    instr_cascade.read() # read required to flush response
+                    instr_cascade.query("*OPC?")
 
                     # TODO: do chuck height compensation from baseline
 

@@ -505,6 +505,7 @@ class ProgramKeysightIdVgs(MeasurementProgram):
                 nbytes = int(instr_b1500.query("NUB?"))
                 print(f"nbytes={nbytes}")
                 buf = instr_b1500.read()
+                print(f"buf, len(buf):{len(buf)}")
                 print(buf)
 
                 # parse vals strings into numbers
@@ -514,7 +515,7 @@ class ProgramKeysightIdVgs(MeasurementProgram):
                 # values chunked for each measurement point:
                 #   [ [vgs0, id0, ig0] , [vgs1, id1, ig1], ... ]
                 val_chunks = [ x for x in iter_chunks(vals, 7) ]
-                print(val_chunks)
+                print(f"val_chunks: {val_chunks}")
 
                 # split val chunks into forward/reverse sweep components:
                 if sweep_type == SweepType.FORWARD or sweep_type == SweepType.REVERSE:
