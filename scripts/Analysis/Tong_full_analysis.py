@@ -171,14 +171,21 @@ def plot_group_overlay(grouped, program, target_vds, dir_indices, use_abs, logy,
     if not keys_sorted:
         raise SystemExit("Nothing to plot: empty groups.")
 
-    cmap = getattr(plt.cm, color_map)
-    kmin, kmax = min(keys_sorted), max(keys_sorted)
-    if kmax > kmin:
-        key_to_color = {k: cmap((k - kmin) / (kmax - kmin)+0.3) for k in keys_sorted}
-    else:
-        key_to_color = {k: cmap(0.5) for k in keys_sorted}
+    # cmap = getattr(plt.cm, color_map)
+    # kmin, kmax = min(keys_sorted), max(keys_sorted)
+    # if kmax > kmin:
+    #     key_to_color = {k: cmap((k - kmin) / (kmax - kmin)+0.3) for k in keys_sorted}
+    # else:
+    #     key_to_color = {k: cmap(0.5) for k in keys_sorted}
+    # Use a high-contrast palette from matplotlib
+    base_colors = plt.cm.tab10.colors  # strong, saturated colors
+    # If you have more curves than tab10 colors, cycle through with varied line styles
+    from itertools import cycle
+    color_cycle = cycle(base_colors)
 
-    plt.figure(figsize=(10,6))
+    key_to_color = {k: next(color_cycle) for k in keys_sorted}
+
+    plt.figure(figsize=(10, 6))
     devices_plotted = 0
     curves_plotted = 0
     any_plotted = False
@@ -187,7 +194,6 @@ def plot_group_overlay(grouped, program, target_vds, dir_indices, use_abs, logy,
         color = key_to_color[k]
         labeled_this_group = False
 
-        # stable order by device_id
         for rec in sorted(grouped[k], key=lambda r: r.get("device_id", 0)):
             h5 = os.path.join(rec["path"], f"{program}.h5")
             rec_plotted = False
@@ -201,8 +207,8 @@ def plot_group_overlay(grouped, program, target_vds, dir_indices, use_abs, logy,
                     vgs, idc,
                     color=color,
                     linestyle=DIR_STYLE.get(d_idx, "-"),
-                    linewidth=1.2,
-                    alpha=0.85,
+                    linewidth=1.3,        # slightly thicker for visibility
+                    alpha=0.8,            # no transparency for strong color
                     label=(f"{group_key}={k:g}" if not labeled_this_group else None)
                 )
                 labeled_this_group = True
@@ -213,26 +219,33 @@ def plot_group_overlay(grouped, program, target_vds, dir_indices, use_abs, logy,
             if rec_plotted:
                 devices_plotted += 1
 
+    
     if not any_plotted:
         raise SystemExit("Found devices but failed to load any curves.")
 
-    plt.xlabel("V_GS [V]")
-    plt.ylabel("|I_D| [A]" if use_abs else "I_D [A]")
+    # Bigger font for axis labels
+    plt.xlabel("V_GS [V]", fontsize=16)
+    plt.ylabel("|I_D| [A]" if use_abs else "I_D [A]", fontsize=16)
+
     if logy:
         plt.yscale("log")
-    # Add counts to the title
-    plt.title(f"{title}\nNumber of device={devices_plotted/len(grouped)}")
+    
+    # Only show device count as title
+    plt.title(f"Devices Plotted per Category= {devices_plotted/len(grouped):.1f}", fontsize=18)
+
     plt.grid(True, which="both", ls=":")
+
+    # Increase tick label font size
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
 
     ax = plt.gca()
     ax.relim()
     ax.autoscale_view(scalex=False, scaley=True)
-    plt.ylim(bottom=2e-11)
-    plt.legend(ncols=legend_cols, fontsize=8)
+    plt.ylim(bottom=2e-11, top=1e-2)  # Set y-limits for better visibility
 
-    # ---- title with integer counts ----
-    plt.title(f"{title}\nDevices = {devices_plotted/len(grouped):.1f} ")
-    # -----------------------------------
+    # Bigger legend font
+    plt.legend(ncols=legend_cols, fontsize=15)
 
     plt.tight_layout()
     os.makedirs(os.path.dirname(out_png), exist_ok=True)
@@ -365,15 +378,15 @@ def main():
     ap = argparse.ArgumentParser(description="Analyze IdVgs with multiple sweep families.")
     ap.add_argument("--mode", choices=["tlm","w","ov","long","tlm"], default="tlm")
     # NOTE: fix the 'AI' vs 'Al' typo in your path!
-    ap.add_argument("--root", default="./scripts/Analysis/W", help="Root folder to scan")
+    ap.add_argument("--root", default="./scripts/Analysis/W/die_x_0_y_0/tlm2", help="Root folder to scan")
     ap.add_argument("--type", choices=["nmos","pmos","both"], default="both")
     # tlm facet options
-    ap.add_argument("--sweep", choices=["lc","lch","lov","gateasym","w","nf"], default="lch")
+    ap.add_argument("--sweep", choices=["lc","lch","lov","gateasym","w","nf"], default="lc")
     ap.add_argument("--max_cols", type=int, default=6)
 
     # defaults that commonly match your fingered dataset (adjust as needed)
-    ap.add_argument("--lc", type=float, default=0.2)
-    ap.add_argument("--lch", type=float, default=0.40)
+    ap.add_argument("--lc", type=float, default=0.4)
+    ap.add_argument("--lch", type=float, default=0.4)
     ap.add_argument("--lov", type=float, default=0.06)
     ap.add_argument("--gateasym", type=float, default=0.00)
     ap.add_argument("--w", type=float, default=4.0)
@@ -381,11 +394,11 @@ def main():
 
     ap.add_argument("--program", default="keysight_id_vgs")
     ap.add_argument("--target_vds", type=float, default=0.8)
-    ap.add_argument("--dir_indices", default="2", help="'all' or comma list like '2,3'")
+    ap.add_argument("--dir_indices", default="2", help="'all' or comma list like '2,3'") #direction
     ap.add_argument("--abs_current", default="true", action="store_true")
     ap.add_argument("--logy", default="true", action="store_true")
     ap.add_argument("--csv_out", default="")
-    ap.add_argument("--out", default="./scripts/Analysis/Al/_config_summary", help="Output PNG path OR folder")
+    ap.add_argument("--out", default="./scripts/Analysis/W/_config_summary", help="Output PNG path OR folder")
 
     args = ap.parse_args()
 
