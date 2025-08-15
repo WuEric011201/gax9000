@@ -56,9 +56,15 @@ def find_die_dirs(root):
 def find_device_dirs(die_path):
     for name in sorted(os.listdir(die_path)):
         p = os.path.join(die_path, name)
-        if os.path.isdir(p) and name.startswith("gax_"):
+        if os.path.isdir(p) and name.startswith("gax_mod_fet_tlm"):
             yield p
-
+def nearest_value(arr, target):
+    """Return arr[idx] closest to target, and idx."""
+    arr = np.asarray(arr)
+    if arr.size == 0 or not np.any(np.isfinite(arr)):
+        return np.nan, -1
+    idx = int(np.nanargmin(np.abs(arr - target)))
+    return arr[idx], idx
 # ---------- Merge per die ----------
 def merge_die(die_path, program):
     dev_dirs = list(find_device_dirs(die_path))
@@ -119,7 +125,8 @@ def plot_die_idvgs_one_png(die_name, merged, out_png_path,
         "min": "navy",
         "max": "#065608",  # light-ish blue
     }
-
+    BROKEN_HIGH = 1e-4
+    BROKEN_LOW  = 1e-12
     fig, ax = plt.subplots(figsize=(9, 6))
 
     # Build list of (bias_index, vds_value) within the window (read from first device for speed)
@@ -133,8 +140,14 @@ def plot_die_idvgs_one_png(die_name, merged, out_png_path,
 
     # keep track of how many devices actually produced a curve
     devices_with_any_curve = set()
-
+    broken_devices = set()
+    currents_at_1p8 = []  # non-broken only
+    current_at_zero = []  # non-broken only
+    vgs_on = 1.8
+    vgs_off = 0.0
+    vgs_sample_tol = 0.1
     for (b, vds_val) in chosen:
+        # print(f"[{die_name}] plotting V_DS={vds_val:.3g} V, bias {b}/{n_bias}")
         # choose color by proximity to ends of the window
         if abs(vds_val - vds_min) <= vds_tol:
             color = VDS_COLOR["min"]
@@ -157,14 +170,25 @@ def plot_die_idvgs_one_png(die_name, merged, out_png_path,
                     vtag = f"V_DS={vds_val:.3g} V"
                     dtag = f"{DIR_LABEL.get(d, f'dir {d}')}"
                     label = f"{vtag} • {dtag}"
+                ymag = np.abs(y)
+                if abs(vds_val - vds_max) <= vds_tol:
+                    if np.any(ymag > BROKEN_HIGH) or np.any(ymag < BROKEN_LOW):
+                        broken_devices.add(dev)
+                    else:
+                        xval, idx = nearest_value(x, vgs_on)
+                        if idx >= 0 and np.isfinite(xval) and abs(xval - vgs_on) <= vgs_sample_tol:
+                            val = float(ymag[idx])
+                            if np.isfinite(val):
+                                currents_at_1p8.append(val)
 
-                ax.plot(
-                    x, y,
-                    color=color,
-                    linestyle=DIR_STYLE.get(d, "-"),
-                    alpha=0.9 if color else 0.7,
-                    linewidth=1.2,
-                    label=label
+                        xval2, idx2 = nearest_value(x, vgs_off)
+                        if idx2 >= 0 and np.isfinite(xval2) and abs(xval2 - vgs_off) <= vgs_sample_tol:
+                            val2 = float(ymag[idx2])
+                            if np.isfinite(val2):
+                                current_at_zero.append(val2)
+
+                ax.plot(x, y,color=color,linestyle=DIR_STYLE.get(d, "-"),
+                    alpha=0.9 if color else 0.7,linewidth=1.2,label=label
                 )
                 devices_with_any_curve.add(dev)
 
@@ -213,6 +237,88 @@ def plot_die_idvgs_one_png(die_name, merged, out_png_path,
     fig.tight_layout()
     fig.savefig(out_png_path, dpi=200)
     plt.close(fig)
+    # return counts so the wafer builder can annotate once
+    return len(devices_with_any_curve), len(broken_devices), currents_at_1p8, current_at_zero
+
+# ---------- Build wafer composite from per-die PNGs ----------
+def build_wafer_composite_from_pngs(merged_root, out_path, pattern=None, bg_color=(255, 255, 255)):
+    from PIL import Image  # pillow
+
+    if pattern is None:
+        pattern = re.compile(r"die_x_(-?\d+)_y_(-?\d+)_idvgs\.png")
+
+    die_images = []
+    for fname in os.listdir(merged_root):
+        m = pattern.match(fname)
+        if m:
+            x, y = map(int, m.groups())
+            die_images.append((x, y, os.path.join(merged_root, fname)))
+
+    if not die_images:
+        print(f"[wafer] No matching PNGs found in {merged_root}; skipping wafer composite.")
+        return None
+
+    xs = [x for x, _, _ in die_images]
+    ys = [y for _, y, _ in die_images]
+    min_x, max_x = min(xs), max(xs)
+    min_y, max_y = min(ys), max(ys)
+
+    first_img = Image.open(die_images[0][2])
+    img_w, img_h = first_img.size
+    first_img.close()
+
+    grid_w = (max_x - min_x + 1) * img_w
+    grid_h = (max_y - min_y + 1) * img_h
+
+    canvas = Image.new("RGB", (grid_w, grid_h), bg_color)
+
+    for x, y, path in die_images:
+        img = Image.open(path)
+        px = (x - min_x) * img_w
+        py = (max_y - y) * img_h  # invert Y so larger Y is "up"
+        canvas.paste(img, (px, py))
+        img.close()
+
+    canvas.save(out_path)
+    print(f"[wafer] composite -> {out_path}")
+    return out_path
+# ---------- Wafer-level histogram ----------
+def plot_oncurrent_histogram(currents, out_path, bins=40, title=None):
+    """
+    Plot wafer-level distribution of on-current (Id at VGS≈target), using log-spaced bins.
+    `currents` should be positive magnitudes (floats).
+    """
+    currents = np.asarray(currents, dtype=float)
+    currents = currents[np.isfinite(currents)]
+    # Use magnitude for binning; if signed, take abs
+    currents = np.abs(currents)
+    currents = currents[(currents > 0)]
+
+    if currents.size == 0:
+        print("[wafer] No non-broken Id@VGS samples to plot histogram.")
+        return
+
+    cmin, cmax = float(np.min(currents)), float(np.max(currents))
+    if cmin <= 0 or cmax <= 0:
+        print("[wafer] Non-positive values encountered; skipping histogram.")
+        return
+
+    # log-spaced bins
+    bin_edges = np.logspace(np.log10(cmin), np.log10(cmax), bins + 1)
+
+    plt.figure(figsize=(8, 5))
+    plt.hist(currents, bins=bin_edges, edgecolor="black", alpha=0.8)
+    plt.xscale("log")
+    plt.xlabel("I_on @ VGS≈target [A]")
+    plt.ylabel("Count")
+    if title:
+        plt.title(title)
+    plt.grid(True, which="both", ls=":", alpha=0.6)
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    plt.savefig(out_path, dpi=200)
+    plt.close()
+    print(f"[wafer] on-current histogram -> {out_path}")
 
 # ---------- Build wafer composite from per-die PNGs ----------
 def build_wafer_composite_from_pngs(merged_root, out_path, pattern=None, bg_color=(255, 255, 255)):
@@ -260,7 +366,8 @@ def build_wafer_composite_from_pngs(merged_root, out_path, pattern=None, bg_colo
 # ---------- CLI ----------
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--root", default="./scripts/wafer_map/W/multidie", help="Root folder containing die_x_* subfolders")
+    # ap.add_argument("--root", default="./scripts/wafer_map/W/Lc200", help="Root folder containing die_x_* subfolders")
+    ap.add_argument("--root", default="./scripts/wafer_map/Pure_Al/lc_0.40_lch_0.40", help="Root folder containing die_x_* subfolders")
     ap.add_argument("--program", default="keysight_id_vgs", help="HDF5 program name (default: keysight_id_vgs)")
     ap.add_argument("--vds_min", type=float, default=0.05, help="Minimum V_DS to include (default 0.05 V)")
     ap.add_argument("--vds_max", type=float, default=0.8, help="Maximum V_DS to include (default 0.8 V)")
@@ -271,7 +378,8 @@ def main():
     args = ap.parse_args()
 
     merged_roots_seen = set()
-
+    wafer_total = 0
+    wafer_broken = 0
     for die_path in find_die_dirs(args.root):
         die_name = os.path.basename(die_path)
 
@@ -282,24 +390,58 @@ def main():
         merged_roots_seen.add(merged_root)
         os.makedirs(merged_root, exist_ok=True)
         out_png = os.path.join(merged_root, f"{die_name}_idvgs.png")
-
-        plot_die_idvgs_one_png(
+        
+        n_total, n_broken, on_currents, off_current = plot_die_idvgs_one_png(
             die_name,
             merged,
             out_png_path=out_png,
             vds_min=args.vds_min,
             vds_max=args.vds_max,
-            dir_indices=(2, 3),         # Forward 2nd & Reverse 2nd
+            dir_indices=(2, ),         # Forward 2nd & Reverse 2nd
             use_abs=args.abs_current,
             ylog=args.log,
             vds_tol=args.vds_tol,
         )
+        wafer_currents_1p8 = []  # non-broken only, across the waferz
+        wafer_currents_1p8.extend(on_currents) 
+        wafer_current_zero = []  # non-broken only, across the wafer
+        wafer_current_zero.extend(off_current)
+        print(f"[{die_name}] devices plotted: {n_total}, broken: {n_broken}")
+        wafer_total += n_total
+        wafer_broken += n_broken
         print(f"[{die_name}] plot -> {out_png}")
 
+        w_min = float(np.min(wafer_currents_1p8))
+        w_max = float(np.max(wafer_currents_1p8))
+        w_avg = float(np.mean(wafer_currents_1p8))
+        print(f"[wafer] Id@1.8V (non-broken): min={w_min:.3e}, max={w_max:.3e}, avg={w_avg:.3e}")
+
+        w0_min = float(np.min(wafer_current_zero))
+        w0_max = float(np.max(wafer_current_zero))
+        w0_avg = float(np.mean(wafer_current_zero))
+        print(f"[wafer] Id@0.0V (non-broken): min={w0_min:.3e}, max={w0_max:.3e}, avg={w0_avg:.3e}")
+
+        hist_out = os.path.join(merged_root, "wafer_on_current_distribution.png")
+        plot_oncurrent_histogram(
+            wafer_currents_1p8,
+            hist_out,
+            bins=40,
+            title=f"On-current @ VGS≈{1.8:.2f} V (non-broken)"
+        )
+
+        hist_out0 = os.path.join(merged_root, "wafer_off_current_distribution.png")
+        plot_oncurrent_histogram(
+            wafer_current_zero,
+            hist_out0,
+            bins=40,
+            title=f"Off-current @ VGS≈{0.0} V (non-broken)"
+        )
     if not args.skip_wafer_map:
         for merged_root in sorted(merged_roots_seen):
             wafer_out = os.path.join(merged_root, "wafer_map_combined.png")
             build_wafer_composite_from_pngs(merged_root, wafer_out)
+            print(f"[wafer] total devices plotted: {wafer_total}, broken: {wafer_broken}")
+            print(f"percentage broken: {100.0 * wafer_broken / wafer_total:.2f}%" if wafer_total else "0%")
 
 if __name__ == "__main__":
     main()

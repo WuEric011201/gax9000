@@ -25,7 +25,7 @@ PARAMS = ["lc", "lch", "lov", "gateasym", "w", "nf"]
 # ---------------- parsing ----------------
 F = r"(-?\d+(?:\.\d+)?)"
 I = r"(\d+)"
-
+TAIL = rf"_{I}(?:_.+)?$"     # device_id + optional _anything
 RE_NORMAL = re.compile(
     rf"^gax_.*?_(nmos|pmos).*?_lc_{F}_lch_{F}_lov_{F}_gateasym_{F}_w_{F}_{I}_\d{{4}}_\d{{2}}_\d{{2}}_\d{{2}}_\d{{2}}_\d{{2}}$",
     re.IGNORECASE
@@ -43,7 +43,7 @@ RE_LONG = re.compile(
     re.IGNORECASE
 )
 RE_FINGERED = re.compile(
-    rf"^gax_.*?fingered.*?_(nmos|pmos).*?_nf_{I}_lc_{F}_lch_{F}_lov_{F}_gateasym_{F}_w_{F}_{I}_\d{{4}}_\d{{2}}_\d{{2}}_\d{{2}}_\d{{2}}_\d{{2}}$",
+    rf"^gax_.*?fingered(_fet_tlm)?_.*?_(nmos|pmos).*?_nf_{I}_lc_{F}_lch_{F}_lov_{F}_gateasym_{F}_w_{F}{TAIL}",
     re.IGNORECASE
 )
 
@@ -51,10 +51,14 @@ def parse_device_dirname(dirname):
     # Most specific FIRST to avoid wrong matches
     m = RE_FINGERED.match(dirname)
     if m:
-        dev_type, nf, lc, lch, lov, gateasym, w, dev_id = m.groups()
-        return dict(type=dev_type.lower(), nf=int(nf), lc=float(lc), lch=float(lch),
-                    lov=float(lov), gateasym=float(gateasym), w=float(w),
-                    device_id=int(dev_id), dirname=dirname)
+        # groups: optional _fet_tlm, type, nf, lc, lch, lov, gateasym, w, device_id
+        _fet_tlm, dev_type, nf, lc, lch, lov, gateasym, w, dev_id = m.groups()
+        return dict(
+            type=dev_type.lower(), nf=int(nf),
+            lc=float(lc), lch=float(lch), lov=float(lov),
+            gateasym=float(gateasym), w=float(w),
+            device_id=int(dev_id), dirname=dirname
+        )
 
     m = RE_OV.match(dirname)
     if m:
@@ -376,16 +380,13 @@ def print_available_values(records):
 # ---------------- main ----------------
 def main():
     ap = argparse.ArgumentParser(description="Analyze IdVgs with multiple sweep families.")
-    ap.add_argument("--mode", choices=["tlm","w","ov","long","tlm"], default="tlm")
-    # NOTE: fix the 'AI' vs 'Al' typo in your path!
-    ap.add_argument("--root", default="./scripts/Analysis/W/die_x_0_y_0/tlm2", help="Root folder to scan")
+    ap.add_argument("--mode", choices=["tlm","w","ov","long","tlm", "fingered"], default="fingered")
+    ap.add_argument("--root", default="./scripts/Analysis/W/die_x_0_y_0/finger_200", help="Root folder to scan")
     ap.add_argument("--type", choices=["nmos","pmos","both"], default="both")
-    # tlm facet options
-    ap.add_argument("--sweep", choices=["lc","lch","lov","gateasym","w","nf"], default="lc")
+    ap.add_argument("--sweep", choices=["lc","lch","lov","gateasym","w","nf"], default="nf")
     ap.add_argument("--max_cols", type=int, default=6)
 
-    # defaults that commonly match your fingered dataset (adjust as needed)
-    ap.add_argument("--lc", type=float, default=0.4)
+    ap.add_argument("--lc", type=float, default=0.2)
     ap.add_argument("--lch", type=float, default=0.4)
     ap.add_argument("--lov", type=float, default=0.06)
     ap.add_argument("--gateasym", type=float, default=0.00)
@@ -406,7 +407,12 @@ def main():
     recs = scan_device_dirs(args.root)
     print_available_values(recs)
     if not recs:
-        raise SystemExit("No matching device directories found under --root.")
+        # show the first 10 folder names we *tried* to match
+        try:
+            children = [d for d in os.listdir(args.root) if os.path.isdir(os.path.join(args.root,d))]
+            print("[debug] first subfolders under --root:", children[:10])
+        except Exception as e:
+            print("[debug] cannot list --root:", e)
 
     if args.csv_out:
         write_csv(recs, args.csv_out)
