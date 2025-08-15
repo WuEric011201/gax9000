@@ -260,7 +260,7 @@ def build_wafer_composite_from_pngs(merged_root, out_path, pattern=None, bg_colo
 # ---------- CLI ----------
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--root", default="./scripts/wafer_map/W", help="Root folder containing die_x_* subfolders")
+    ap.add_argument("--root", default="./scripts/wafer_map/W/multidie", help="Root folder containing die_x_* subfolders")
     ap.add_argument("--program", default="keysight_id_vgs", help="HDF5 program name (default: keysight_id_vgs)")
     ap.add_argument("--vds_min", type=float, default=0.05, help="Minimum V_DS to include (default 0.05 V)")
     ap.add_argument("--vds_max", type=float, default=0.8, help="Maximum V_DS to include (default 0.8 V)")

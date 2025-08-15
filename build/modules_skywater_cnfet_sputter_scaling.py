@@ -262,10 +262,10 @@ tests = [
 
     generate_test_sweep_config(
         name="wafer_map",
-        mod_prefixes=["mod_fet_tlm_nmos"],
+        mod_prefixes=["mod_fet_tlm_pmos"],
         contains=[
             ["lch_0.40"],
-            ["lc_0.40"],
+            ["lc_0.20"],
         ],
         how_many_to_measure=24,
         multidie=True,
@@ -288,7 +288,7 @@ tests = [
         contains=[
             ["nf_4", "nf_8","nf_16", "nf_32"],
             ["w_4"],
-            ["lc_0.40"],
+            ["lc_0.20"],
             ["lch_0.40"],
         ],
         how_many_to_measure=8,
