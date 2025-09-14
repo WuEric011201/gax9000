@@ -381,7 +381,7 @@ def print_available_values(records):
 def main():
     ap = argparse.ArgumentParser(description="Analyze IdVgs with multiple sweep families.")
     ap.add_argument("--mode", choices=["tlm","w","ov","long","tlm", "fingered"], default="fingered")
-    ap.add_argument("--root", default="./scripts/Analysis/W/die_x_0_y_0/finger_200", help="Root folder to scan")
+    ap.add_argument("--root", default="./scripts/Analysis/W/die_x_0_y_0/tlm2", help="Root folder to scan")
     ap.add_argument("--type", choices=["nmos","pmos","both"], default="both")
     ap.add_argument("--sweep", choices=["lc","lch","lov","gateasym","w","nf"], default="nf")
     ap.add_argument("--max_cols", type=int, default=6)
